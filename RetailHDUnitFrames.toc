@@ -1,0 +1,27 @@
+## Interface: 16001
+## Title: Retail HD UnitFrames
+## IconTexture: Interface\AddOns\RetailHDUnitFrames\media\icon
+## Notes: HD retail-style unit frames for WoW Forever. /rhd
+## Notes-esES: Marcos de unidad HD estilo Retail para WoW Forever. /rhd
+## Notes-esMX: Marcos de unidad HD estilo Retail para WoW Forever. /rhd
+## Notes-deDE: HD-Einheitenrahmen im Retail-Stil für WoW Forever. /rhd
+## Notes-frFR: Cadres d'unité HD style Retail pour WoW Forever. /rhd
+## Notes-ruRU: HD-рамки в стиле Retail для WoW Forever. /rhd
+## Category: Unit Frames
+## Category-esES: Marcos de unidad
+## Category-esMX: Marcos de unidad
+## Category-deDE: Einheitenfenster
+## Category-frFR: Cadres d'unité
+## Category-ruRU: Рамки юнитов
+## Author: NeticSoul
+## X-Copyright: Copyright (c) 2026 NeticSoul
+## Version: 1.0.0
+## SavedVariables: RetailHDUnitFramesDB
+## X-License: MIT
+
+Media.lua
+Locales.lua
+Core.lua
+Options.lua
+Wizard.lua
+Frames.lua
