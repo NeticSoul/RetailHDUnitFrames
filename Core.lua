@@ -504,10 +504,13 @@ end
 -- Status text: our own strings, fed by the bar's own updates, so Blizzard's status text code never
 -- runs on our behalf. Values may be secret: they are only formatted, never compared or computed.
 --
--- Optionally only while the mouse is over the unit frame: OnEnter shows them; leaving is polled
--- with IsMouseOver (the frame's whole rectangle) while the mouse is there, as SeamlessDamageMeter
--- does, because a child that takes the mouse (an icon, a bar) swallows OnLeave. Hidden texts are
--- not formatted at all; they catch up when shown.
+-- Optionally each text only while the mouse is over its own bar, as the client's status text does.
+-- Entering the unit frame or a bar starts polling IsMouseOver on the frame and on each bar while the
+-- mouse is over any of them, as SeamlessDamageMeter does, because a child that takes the mouse (an
+-- icon, a bar) swallows OnLeave and a bar of ours takes no mouse at all. A region placed with a
+-- secret answers IsMouseOver with a secret: texts hang from regions the client places plainly, and
+-- should one turn secret anyway its text follows the whole frame. Hidden texts are not formatted
+-- at all; they catch up when shown.
 ---------------------------------------------------------------------------------------------------
 local FONT = TextStatusBarText and "TextStatusBarText" or "GameFontHighlightSmall"
 ns.FONT = FONT
@@ -633,30 +636,47 @@ end
 local poller = CreateFrame("Frame")
 poller:Hide()
 
-local function Over(frame)
-    local over = frame:IsMouseOver()
-    return Readable(over) and over
+-- Whether the mouse is over a region; nil when its place is secret.
+local function Over(region)
+    local over = region:IsMouseOver()
+    if Readable(over) then
+        return over and true or false
+    end
 end
 
+-- With hover, only the text of the bar under the mouse shows. The frame is polled while the mouse
+-- is over it or one of its bars (one may stick out of it), and forgotten once it is not.
 local function ShowTexts(frame)
-    local shown = not ns.db.hover or Over(frame)
+    local hover = ns.db.hover
+    local onFrame = hover and Over(frame) or false
+    local inside = onFrame
     for _, bar in ipairs(barsOf[frame]) do
         local text = texts[bar]
-        text.shown = shown and true or false
-        SafeUpdateText(bar) -- shows or hides it (a state label always shows)
+        local over = false
+        if hover then
+            over = Over(text.anchor)
+            if over == nil then
+                over = onFrame -- its place is secret: the whole frame stands for it
+            end
+        end
+        local shown = not hover or over
+        inside = inside or over
+        if text.shown ~= shown then
+            text.shown = shown
+            SafeUpdateText(bar) -- shows or hides it (a state label always shows)
+        end
     end
-    if ns.db.hover and shown then
+    if inside then
         hovered[frame] = true
         poller:Show()
+    else
+        hovered[frame] = nil
     end
 end
 
 poller:SetScript("OnUpdate", function(self)
     for frame in pairs(hovered) do
-        if not ns.db.hover or not Over(frame) then
-            hovered[frame] = nil
-            ShowTexts(frame)
-        end
+        ShowTexts(frame)
     end
     if not next(hovered) then
         self:Hide()
@@ -670,7 +690,8 @@ local function Hover(frame, region)
 end
 
 -- kind: "health" or "power". anchor: the region the text spans; trim cuts its right side and lead
--- its left side (a power bar that runs past the health bar, under the ring: texts line up).
+-- its left side, negative ones widen it (a power bar that runs past the health bar, under the
+-- ring: texts line up).
 function ns.Text(frame, bar, kind, anchor, trim, lead, font)
     if not frame or not bar or not anchor then
         return
@@ -690,6 +711,7 @@ function ns.Text(frame, bar, kind, anchor, trim, lead, font)
         text = {
             holder = holder,
             kind = kind,
+            anchor = anchor,
             center = String("CENTER", 0),
             left = String("LEFT", 3),
             right = String("RIGHT", -3),
@@ -713,6 +735,7 @@ function ns.Text(frame, bar, kind, anchor, trim, lead, font)
         end
         ShowTexts(frame)
     end
+    text.anchor = anchor -- what the mouse must be over: where the bar is drawn
     local object = font or FONT -- a bigger font where the client scales a frame down (small focus)
     if text.font ~= object and _G[object] then
         text.font = object

@@ -81,6 +81,23 @@ local function Power(bar, family, frame, unit)
     end
 end
 
+-- Forever's UnitFrame_SetUnit, when a frame changes unit, registers its power bar's power event
+-- for the bar's old unit: it gives the bar its new unit only afterwards. The client polls the bars
+-- of the player, pet, vehicle, target, focus and their targets every frame; the party's follow that
+-- event, so once a party frame has changed unit its fill stops following the member's power (our
+-- text, read from the unit, stays right) until a reload. Closing Edit Mode with its party frames
+-- shown is enough (they stand in the player for empty slots, then get their party unit back), as
+-- is a member in a vehicle. After every unit change each such bar of ours listens to its own unit
+-- again, as the client sets it up at initialize. Event registration is not protected: it applies
+-- in combat too.
+local function ListenToUnit(bar)
+    local unit, polled = bar.unit, bar.frequentUpdates
+    if Readable(unit) and type(unit) == "string" and Readable(polled) and not polled then
+        bar:RegisterUnitEvent("UNIT_POWER_UPDATE", unit)
+        bar:RegisterUnitEvent("UNIT_MAXPOWER", unit)
+    end
+end
+
 -- Heal prediction and absorb overlays stretch one fill over the bar; give them the white fill.
 local function PredictionFills(bar, family)
     for _, key in ipairs(PREDICTION) do
@@ -413,7 +430,9 @@ local function Player(frame, full)
     ns.Hide(contextual and contextual.PlayerPortraitCornerIcon) -- Forever's own (other art), under ours
     Shown(contextual and contextual.GroupIndicator, ns.db.groupTab) -- the raid group tab
 
-    Text(frame, health, "health", health)
+    -- The health text on the bar's container, as the client's own: Forever sets the bar's width from
+    -- the max health loss, a secret in instances, and the mouse cannot be told over a secret place.
+    Text(frame, health, "health", bars)
     Text(frame, mana, "power", mana)
 end
 
@@ -916,7 +935,8 @@ local function Party(frame, full)
     ns.Layer(frame, level, 2, frame.Name)
     ns.Layer(frame, level, 3, overlay) -- role, leader and PvP icons
 
-    Text(frame, health, "health", health)
+    -- The health text on the bar's container, as the player's; the bar runs one unit past it.
+    Text(frame, health, "health", bars, -SMALL_EXTEND)
     Text(frame, mana, "power", mana, nil, 4 - SMALL_EXTEND) -- the mana bar starts further left
 end
 
@@ -985,6 +1005,14 @@ local function HookClient()
         local frame = owners[bar]
         if frame then
             ns.Refresh(frame, false)
+        end
+    end)
+    Hook("UnitFrame_SetUnit", function(_, _, _, manabar)
+        if manabar and owners[manabar] then
+            local ok, err = pcall(ListenToUnit, manabar)
+            if not ok then
+                geterrorhandler()(err)
+            end
         end
     end)
     if FocusFrame and type(FocusFrame.SetSmallSize) == "function" then

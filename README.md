@@ -7,7 +7,7 @@
 <p align="center">HD retail-style unit frames for WoW Forever.</p>
 
 <p align="center">
-  <a href="https://github.com/NeticSoul/RetailHDUnitFrames/releases"><img alt="Version 1.0.0" src="https://img.shields.io/badge/version-1.0.0-e3b341?style=flat-square&labelColor=2d333b"></a>
+  <a href="https://github.com/NeticSoul/RetailHDUnitFrames/releases"><img alt="Version 1.0.1" src="https://img.shields.io/badge/version-1.0.1-e3b341?style=flat-square&labelColor=2d333b"></a>
   <img alt="World of Warcraft: Forever" src="https://img.shields.io/badge/World%20of%20Warcraft-Forever-8957e5?style=flat-square&labelColor=2d333b&logo=battledotnet&logoColor=white">
   <img alt="Interface 16001" src="https://img.shields.io/badge/interface-16001-6e7681?style=flat-square&labelColor=2d333b">
   <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-3fb950?style=flat-square&labelColor=2d333b"></a>
